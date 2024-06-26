@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  mysql_user_db:
+    image: mysql:8.0
+    container_name: mysql_user_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_USERS_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_USERS_DB_NAME}
+      MYSQL_USER: ${MYSQL_USERS_DB_USER}
+      MYSQL_PASSWORD: ${MYSQL_USERS_DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_user_data:/var/lib/mysql
+    env_file:
+      - .env
+
+  mysql_product_db:
+    image: mysql:8.0
+    container_name: mysql_product_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PRODUCTS_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_PRODUCTS_DB_NAME}
+      MYSQL_USER: ${MYSQL_PRODUCTS_DB_USER}
+      MYSQL_PASSWORD: ${MYSQL_PRODUCTS_DB_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./products-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_product_data:/var/lib/mysql
+    env_file:
+      - .env
+
+  microservice1:
+    build: ./auth-service/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql_user_db
+    env_file:
+      - ./auth-service/.env
+
+  microservice2:
+    build: ./products-service/
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql_product_db
+    env_file:
+      - ./products-service/.env
+
+
+volumes:
+  mysql_user_data:
+  mysql_product_data:
